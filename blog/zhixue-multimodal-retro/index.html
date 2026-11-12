@@ -1,37 +1,16 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="短片段上，混合检索把召回从 0.42 拉到 0.82；长课上，它输给把整节课塞进上下文的模型。这是一次关于边界的复盘，附指标、成本和三个我会改的决定。"><link rel="canonical" href="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta property="og:title" content="RAG 不是万能药：一个课堂 Agent 的 0.42 到 0.82 · Writing"><meta property="og:description" content="短片段上，混合检索把召回从 0.42 拉到 0.82；长课上，它输给把整节课塞进上下文的模型。这是一次关于边界的复盘，附指标、成本和三个我会改的决定。"><meta property="og:type" content="website"><meta property="og:url" content="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta name="twitter:card" content="summary"><title>RAG 不是万能药：一个课堂 Agent 的 0.42 到 0.82 · Writing</title><link rel="stylesheet" href="/_astro/about.RPfwdVez.css"></head> <body> <header class="site-header"> <div class="wrap"> <nav> <a class="brand" href="/">Tinjiy</a> <div class="links"> <a href="/"> Home </a><a href="/projects/"> Projects </a><a href="/blog/" aria-current="page"> Blog </a><a href="/tools/"> Tools </a><a href="/resume/"> Resume </a><a href="/about/"> About </a> </div> </nav> </div> </header> <main class="wrap">  <article class="article"> <header class="article-hero"> <p class="mono">Writing / 2026-11-11</p> <h1>RAG 不是万能药：一个课堂 Agent 的 0.42 到 0.82</h1> <p class="lede">短片段上，混合检索把召回从 0.42 拉到 0.82；长课上，它输给把整节课塞进上下文的模型。这是一次关于边界的复盘，附指标、成本和三个我会改的决定。</p> <div class="article-meta"> <div class="tags"> <span class="tag">RAG</span><span class="tag">Agent</span><span class="tag">多模态</span><span class="tag">项目复盘</span> </div> <span class="mono">约 5 分钟</span> </div> </header> <div class="prose"> <p>先给结论。</p>
-<p>短片段复习，混合检索把 ECR 从 0.416 拉到 0.824，答案命中率从 22.9% 到 58.0%。长课（64.95 分钟）上，同一套方法只有 25.5%，把整节课塞进上下文的模型是 41.8%。</p>
-<p>我们没赢。但我知道它为什么没赢，也知道它适合用在哪。</p>
-<h2 id="问题复习一节课难在哪">问题：复习一节课，难在哪</h2>
-<p>一节课 45–90 分钟。学生真正想找的，往往是一句话、一个公式、一页 PPT。拖进度条找不到，重看一遍又太贵。</p>
-<p>2025 年我们做智学多模态，5 个人，目标就一个：把课程录像变成可检索的时间轴。问答要能回到”第 12:30，第 8 页”。</p>
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="同一套 RAG，在短片段上把答案命中率从 22.9% 拉到 58.0%，在 65 分钟长课上只有 25.5%，打不过全上下文。这是一次关于边界的复盘，附成本和三个我会改的决定。"><link rel="canonical" href="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta property="og:title" content="RAG 不是万能药：短片段召回 0.42 到 0.82，长课却输给全上下文 · Writing"><meta property="og:description" content="同一套 RAG，在短片段上把答案命中率从 22.9% 拉到 58.0%，在 65 分钟长课上只有 25.5%，打不过全上下文。这是一次关于边界的复盘，附成本和三个我会改的决定。"><meta property="og:type" content="website"><meta property="og:url" content="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta name="twitter:card" content="summary"><title>RAG 不是万能药：短片段召回 0.42 到 0.82，长课却输给全上下文 · Writing</title><link rel="stylesheet" href="/_astro/about.B1doiIl3.css"></head> <body> <header class="site-header"> <div class="wrap"> <nav> <a class="brand" href="/">Tinjiy</a> <div class="links"> <a href="/"> Home </a><a href="/projects/"> Projects </a><a href="/blog/" aria-current="page"> Blog </a><a href="/tools/"> Tools </a><a href="/resume/"> Resume </a><a href="/about/"> About </a> </div> </nav> </div> </header> <main class="wrap">  <article class="article"> <header class="article-hero"> <p class="mono">Writing / 2026-11-11</p> <h1>RAG 不是万能药：短片段召回 0.42 到 0.82，长课却输给全上下文</h1> <p class="lede">同一套 RAG，在短片段上把答案命中率从 22.9% 拉到 58.0%，在 65 分钟长课上只有 25.5%，打不过全上下文。这是一次关于边界的复盘，附成本和三个我会改的决定。</p> <div class="article-meta"> <div class="tags"> <span class="tag">RAG</span><span class="tag">Agent</span><span class="tag">多模态</span><span class="tag">项目复盘</span> </div> <span class="mono">约 6 分钟</span> </div> </header> <div class="prose"> <div class="tldr">
+<p><strong>先看结论</strong></p>
+<ul>
+<li>短片段：召回 0.416 → 0.824，答案命中 22.9% → 58.0%。</li>
+<li>长课（64.95 分钟）：检索 25.5%，全上下文 41.8%。</li>
+<li>成本约为全上下文的 1/25，但长课的效果是拿钱换的。</li>
+</ul>
+</div>
+<p>2025 年，我们 5 个人做智学多模态。目标很具体：把一节课的录像变成可检索的时间轴，复习时能跳回“第 12:30，第 8 页”。</p>
 <p>我负责 API 和 Agent/RAG。</p>
-<h2 id="两种方案先摆在一起">两种方案，先摆在一起</h2>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<table><thead><tr><th>方案</th><th>做法</th><th>优点</th><th>代价</th></tr></thead><tbody><tr><td>全上下文</td><td>整节课转写 + PPT 文本塞进模型</td><td>理解完整，长课效果好</td><td>token 贵，长视频会截断，难给精确引用</td></tr><tr><td>检索增强</td><td>先检索片段，再让模型基于片段回答</td><td>便宜、可引用、可拒答</td><td>检索错了，后面全错；长课全局问题弱</td></tr></tbody></table>
-<p>我们选检索增强。不是因为它更强，是因为它更适合”复习”这个场景：用户要的是定位和引用，不是让模型写一篇课程总结。</p>
-<h2 id="实测三种长度三种结果">实测：三种长度，三种结果</h2>
+<p>一年后回看，RAG 只在一种场景里赢得干净：短片段、要引用、要拒答。长课上，它输给了把整节课塞进上下文的模型。</p>
+<p>下面按“结果 → 原因 → 怎么办”说。</p>
+<h2 id="结果三种长度三种答案">结果：三种长度，三种答案</h2>
 <p>CEQA 是我们自己标的课程问答集，240 题，draft 版本。</p>
 
 
@@ -62,11 +41,11 @@
 
 
 
-<table><thead><tr><th>测试集</th><th>指标</th><th>混合检索</th><th>全上下文 B1</th></tr></thead><tbody><tr><td>短片段（7 段 / 27.6 分钟）</td><td>ECR / AnsAcc</td><td>0.833 / 48.5%</td><td>—</td></tr><tr><td>全量 157 题</td><td>ECR / AnsAcc</td><td>0.824 / 58.0%</td><td>61.8%</td></tr><tr><td>长课 64.95 分钟</td><td>AnsAcc</td><td>25.5%</td><td>41.8%</td></tr></tbody></table>
-<p>短片段上，检索明显有用：页面证据集中，命中就是命中。
-全量上，我们追近了，但没超过。
-长课上，差距最大。原因不复杂：问题需要跨章节的全局理解，而检索只给回局部片段。</p>
-<figure class="chart">
+<table><thead><tr><th>测试集</th><th>指标</th><th>混合检索</th><th>全上下文</th></tr></thead><tbody><tr><td>短片段（7 段 / 27.6 分钟）</td><td>ECR / 命中率</td><td>0.833 / 48.5%</td><td>—</td></tr><tr><td>全量 157 题</td><td>ECR / 命中率</td><td>0.824 / 58.0%</td><td>61.8%</td></tr><tr><td>长课 64.95 分钟</td><td>命中率</td><td>25.5%</td><td>41.8%</td></tr></tbody></table>
+<p>短片段上，检索明显有用。页面证据集中，命中就是命中。</p>
+<p>全量上，我们追近了，但没超过。</p>
+<p>长课上，差距最大：25.5% 对 41.8%。</p>
+<div class="chart">
   <svg viewBox="0 0 640 220" role="img" aria-label="答案命中率对比：短片段 48.5%，全量 58.0%，长课 25.5%">
     <line x1="40" y1="180" x2="620" y2="180" stroke="#353a42"></line>
     <line x1="40" y1="120" x2="620" y2="120" stroke="#24272c"></line>
@@ -84,26 +63,43 @@
     <text x="284" y="204" font-size="12" fill="#c9c5bd">全量 157 题</text>
     <text x="464" y="204" font-size="12" fill="#c9c5bd">长课 64.95 分钟</text>
   </svg>
-  <figcaption>答案命中率（%）：短片段和全量是同一条曲线上的两个点；长课是另一套题，不能直接比大小，但能看出检索在长课上失灵。</figcaption>
-</figure>
-<p>成本这边，混合检索大约是长课全上下文的 1/25。省下来的钱，有一部分是拿效果换的。</p>
-<h2 id="三个我现在会改的决定">三个我现在会改的决定</h2>
-<p><strong>一、先定编排，再写 Prompt。</strong></p>
-<p>最早想把流程塞进一个 Prompt。流程一长就散：出错了，不知道是检索错、工具错，还是生成错。后来拆成意图路由 + 3–4 条子工作流，每步单独看日志，才定位得到问题。顺序反了。</p>
-<p><strong>二、先建评测集，再做功能。</strong></p>
-<p>没有固定题集时，每次改动都在新题上试，说不清是变好还是换题了。补了 CEQA 之后，才敢说”这次有效”。代价是前期慢，但比反复返工便宜。</p>
-<p><strong>三、入口先收口，再接工具。</strong></p>
-<p>工具能”做事”，但没有统一入口时，鉴权、限流、审计要在每处重写，出问题也难复现。后来补了 API Gateway，请求都从那里进，才把线收住。</p>
-<h2 id="我的判断">我的判断</h2>
-<p>RAG 的收益有边界，边界由数据形态和问题类型决定。</p>
+  <figcaption>答案命中率（%）。短片段和全量是同一条曲线上的两个点；长课是另一套题，不能直接比大小，但能看出检索在长课上失灵。</figcaption>
+</div>
+<h2 id="原因长课问的是整节课讲了什么">原因：长课问的是“整节课讲了什么”</h2>
+<p>短课的问题，答案通常在一页 PPT、一段字幕里。检索把那一页找出来，模型就能答。</p>
+<p>长课不一样。</p>
+<p>学生问“这节课和上节课的模型有什么区别”，答案可能散在三四个章节里。检索每次只给回几个片段，模型看不到全局。</p>
+<p>这不是检索的 bug，是它的工作方式。它只负责“找局部”，不负责“串起来”。</p>
+<p>所以我没有把长课失败归因于 embedding 或 chunk size。换更大的模型、换更好的向量库，也补不上这个结构性缺口。</p>
+<h2 id="三个坑都是顺序错了">三个坑，都是顺序错了</h2>
+<p><strong>先写 Prompt，后定编排。</strong></p>
+<p>最早想把流程塞进一个 Prompt。流程一长就散：答错了，不知道是检索错、工具错，还是生成错。</p>
+<p>后来拆成意图路由 + 3–4 条子工作流，每一步单独看日志，才定位得到问题。顺序应该反过来。</p>
+<p><strong>先做功能，后建评测集。</strong></p>
+<p>没有固定题集时，每次改动都在新题上试，说不清是变好还是换题了。</p>
+<p>补了 CEQA 之后，才敢说“这次有效”。前期慢，但比反复返工便宜。</p>
+<p><strong>先接工具，后收入口。</strong></p>
+<p>工具能“做事”，但没有统一入口时，鉴权、限流、审计要在每处重写，出问题也难复现。</p>
+<p>后来补了 API Gateway，所有请求从那里进，才把线收住。</p>
+<h2 id="怎么选一张简单的判断表">怎么选：一张简单的判断表</h2>
 <ul>
-<li>短片段、要引用、要拒答：检索划算。</li>
-<li>长课、要全局理解：全上下文仍然更好，或者先做分块摘要，再检索。</li>
-<li>对外只能说”能定位、能引用、便宜”，不能说”超过通用多模态大模型”。</li>
+<li>用户要“定位、引用、拒答”：用检索。短片段、复习、客服知识库都合适。</li>
+<li>用户要“整节课/整份文档的全局理解”：先全上下文，或者先做分块摘要再检索。</li>
+<li>预算紧、问题局部：检索的性价比最高。</li>
+<li>预算够、问题全局：别硬上 RAG，效果会让你失望。</li>
 </ul>
-<p>下一步我会把 pgvector 正式补上，CEQA 扩到 400+，长课单独做”分块摘要 + 全局问题”的实验。不再拿一套管线打所有场景。</p>
+<h2 id="下一步">下一步</h2>
+<ul>
+<li>把 pgvector 正式 RAG 补上（现在是混合检索 + 临时实现）。</li>
+<li>CEQA 从 240 题扩到 400+，加跨学科留出。</li>
+<li>长课单独做“分块摘要 + 全局问题”的实验，不再拿一套管线打所有场景。</li>
+</ul>
+<p>RAG 的收益有边界。承认边界，比多接一个模型有用。</p>
 <blockquote>
 <p>数据来源：项目仓库 <code>PROGRESS.md</code>、<code>docs/ceqa/PILOT_REPORT.md</code>；CEQA 为 draft 版本，数字会随标注修订变化。</p>
-</blockquote> </div> <footer class="article-foot"> <a href="/blog/">← 全部文章</a> <a href="https://github.com/TinjiYDon">GitHub</a> </footer> </article>  </main> <footer class="site-footer"> <div class="wrap foot-grid"> <span>© 2026 Tinjiy · Shanghai</span> <span> <a href="https://github.com/TinjiYDon">GitHub</a> ·
+</blockquote> </div> <footer class="article-foot"> <a href="/blog/">← 全部文章</a> <a href="https://github.com/TinjiYDon">GitHub</a> </footer> <aside class="comments"> <p class="mono">Comments / GitHub</p> <h2>在 GitHub 上讨论</h2> <p>评论放在这篇文章对应的 GitHub Issue 里。需要 GitHub 账号；不登录也能看。</p> <a class="comment-cta" href="https://github.com/TinjiYDon/TinjiYDon.github.io/issues/1">
+打开讨论 #1 →
+</a> </aside> </article>  </main> <footer class="site-footer"> <div class="wrap foot-grid"> <span>© 2026 Tinjiy · Shanghai</span> <span> <a href="https://github.com/TinjiYDon">GitHub</a> ·
+<a href="https://github.com/TinjiYDon/TinjiYDon.github.io/discussions">Discussions</a> ·
 <a href="/rss.xml">RSS</a> ·
 <a href="/about/">About</a> </span> </div> </footer> </body></html>
