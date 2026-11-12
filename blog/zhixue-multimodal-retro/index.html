@@ -1,15 +1,14 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="短片段上，RAG 把召回从 0.42 拉到 0.82；长课上，它只有 25.5%，输给把整节课塞进上下文的模型。这不是 bug，是边界。"><link rel="canonical" href="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta property="og:title" content="我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事 · Writing"><meta property="og:description" content="短片段上，RAG 把召回从 0.42 拉到 0.82；长课上，它只有 25.5%，输给把整节课塞进上下文的模型。这不是 bug，是边界。"><meta property="og:type" content="website"><meta property="og:url" content="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta name="twitter:card" content="summary"><title>我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事 · Writing</title><link rel="stylesheet" href="/_astro/about.HgC0ZZDa.css"></head> <body> <header class="site-header"> <div class="wrap"> <nav> <a class="brand" href="/">Tinjiy</a> <div class="links"> <a href="/"> Home </a><a href="/projects/"> Projects </a><a href="/blog/" aria-current="page"> Blog </a><a href="/tools/"> Tools </a><a href="/labs/"> Labs </a><a href="/resume/"> Resume </a><a href="/about/"> About </a> </div> </nav> </div> </header> <main class="wrap">  <article class="article"> <header class="article-hero"> <p class="mono">Writing / 项目复盘 / 2026-11-11</p> <h1>我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事</h1> <p class="lede">短片段上，RAG 把召回从 0.42 拉到 0.82；长课上，它只有 25.5%，输给把整节课塞进上下文的模型。这不是 bug，是边界。</p> <div class="article-meta"> <div class="tags"> <span class="tag">RAG</span><span class="tag">Agent</span><span class="tag">项目复盘</span> </div> <span class="mono">约 3 分钟</span> </div> </header> <div class="prose"> <div class="tldr">
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="短片段上，混合检索把 ECR 从 0.333 拉到 0.833；长课上只有 25.5%，输给把整节课塞进上下文的模型。不是 bug，是边界。"><link rel="canonical" href="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta property="og:title" content="我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事 · Writing"><meta property="og:description" content="短片段上，混合检索把 ECR 从 0.333 拉到 0.833；长课上只有 25.5%，输给把整节课塞进上下文的模型。不是 bug，是边界。"><meta property="og:type" content="website"><meta property="og:url" content="https://tinjiydon.github.io/blog/zhixue-multimodal-retro/"><meta name="twitter:card" content="summary"><title>我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事 · Writing</title><link rel="stylesheet" href="/_astro/about.HgC0ZZDa.css"></head> <body> <header class="site-header"> <div class="wrap"> <nav> <a class="brand" href="/">Tinjiy</a> <div class="links"> <a href="/"> Home </a><a href="/projects/"> Projects </a><a href="/blog/" aria-current="page"> Blog </a><a href="/tools/"> Tools </a><a href="/labs/"> Labs </a><a href="/resume/"> Resume </a><a href="/about/"> About </a> </div> </nav> </div> </header> <main class="wrap">  <article class="article"> <header class="article-hero"> <p class="mono">Writing / 项目复盘 / 2026-11-11</p> <h1>我把 RAG 从神坛上拿下来：一节 65 分钟的课教我的事</h1> <p class="lede">短片段上，混合检索把 ECR 从 0.333 拉到 0.833；长课上只有 25.5%，输给把整节课塞进上下文的模型。不是 bug，是边界。</p> <div class="article-meta"> <div class="tags"> <span class="tag">RAG</span><span class="tag">Agent</span><span class="tag">项目复盘</span> </div> <span class="mono">约 3 分钟</span> </div> </header> <div class="prose"> <div class="tldr">
 <p><strong>先看结论</strong></p>
 <ul>
-<li>短片段：召回 0.416 → 0.824，答案命中 22.9% → 58.0%。</li>
-<li>长课（64.95 分钟）：检索 25.5%，全上下文 41.8%。</li>
-<li>成本约为全上下文的 1/25，但长课的效果是拿钱换的。</li>
+<li>短片段：ECR 0.333 → 0.833，答案命中 18.2% → 48.5%。</li>
+<li>全量 157 题：ECR 0.416 → 0.824，答案命中 22.9% → 58.0%（全上下文 61.8%）。</li>
+<li>长课（64.95 分钟）：25.5%，全上下文 41.8%；长课成本约 1/25，短片段/全量约 1/3。</li>
 </ul>
 </div>
 <p>项目做到第三个月，我们拿到一个很难看的结果。</p>
-<p>短片段上，RAG 把召回从 0.42 拉到 0.82。长课上，它只有 25.5%，而把整节课塞进上下文的模型是 41.8%。</p>
-<p>我不服。</p>
-<p>先查检索，再换 chunk 大小，最后换 embedding。都没用。后来才承认：这不是 bug，是边界。</p>
+<p>短片段上，混合检索把 ECR 从 0.333 拉到 0.833。全量 157 题是 0.416 → 0.824。长课上只有 25.5%，而把整节课塞进上下文的模型是 41.8%。</p>
+<p>我一开始以为是 chunk 或 embedding 的问题，调过之后才承认：这不是 bug，是边界。</p>
 <figure class="shot">
   <img src="/shots/zhixue-course.png" alt="智学多模态课程页：字幕、时间轴、PPT 与问答框" loading="lazy">
   <figcaption>真实运行界面：左侧字幕与时间轴，右侧 PPT 页和问答框（项目验收截图）。</figcaption>
@@ -23,14 +22,14 @@
 <p>学生问“这节课和上节课的模型有什么区别”，答案可能散在三四个章节里。检索每次只给回几个片段，模型看不到全局。</p>
 <p>这不是检索的 bug，是它的工作方式。它只负责“找局部”，不负责“串起来”。</p>
 <p>所以我们没赢。全上下文 41.8%，我们 25.5%。</p>
-<p>但成本这边，混合检索大约是它的 1/25。省下来的钱，有一部分是拿效果换的。</p>
-<h2 id="我改了三件事">我改了三件事</h2>
+<p>但成本这边，长课上混合检索约是全上下文的 1/25；短片段/全量约 1/3。省下来的钱，有一部分是拿效果换的。</p>
+<h2 id="如果重做我会改三件事">如果重做，我会改三件事</h2>
 <p><strong>先定编排，再写 Prompt。</strong></p>
-<p>最早想把流程塞进一个 Prompt，结果一长就散：答错了，不知道是检索错、工具错，还是生成错。后来拆成意图路由 + 3–4 条子工作流，每一步单独看日志，才定位得到问题。</p>
+<p>最早想把流程塞进一个 Prompt，结果一长就散：答错了，不知道是检索错、工具错，还是生成错。如果重做，会先把流程拆成几步，每步单独看日志，再写 Prompt。</p>
 <p><strong>先建评测集，再做功能。</strong></p>
 <p>没有固定题集时，每次改动都在新题上试，说不清是变好还是换题了。补了 CEQA 之后，才敢说“这次有效”。前期慢，但比反复返工便宜。</p>
 <p><strong>先把入口收住，再接工具。</strong></p>
-<p>工具能“做事”，但没有统一入口时，鉴权、限流、审计要在每处重写，出问题也难复现。后来补了 API Gateway，请求都从那里进，才把线收住。</p>
+<p>工具能“做事”，但没有统一入口时，鉴权、限流、审计要在每处重写，出问题也难复现。如果重做，会先收在一个入口，而不是每接一个工具重写一遍。</p>
 <h2 id="所以什么时候该用-rag">所以，什么时候该用 RAG</h2>
 <ul>
 <li>用户要定位、引用、拒答：用检索。</li>
